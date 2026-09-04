@@ -1,0 +1,149 @@
+# Stripe Webhook Signature Doctor
+
+> Free, client-side checker that diagnoses Stripe webhook signature verification errors ("No signatures found matching the expected signature for payload", "Timestamp outside the tolerance zone", "Unable to extract timestamp and signatures from header", "Webhook payload must be provided as a string or a Buffer", "No webhook payload was provided") and gives the exact fix.
+
+Paste the exact error text, how your handler reads the raw request body and the `Stripe-Signature` header, where your `whsec_` secret comes from, and (optionally) the relevant lines of your handler code, and it classifies the error against five documented root causes, cross-checks your config against Stripe's own signature-verification rules, and reports which cause is actually responsible: no generic advice, no account, no backend, and it never asks for the secret's actual value.
+
+## What it checks
+
+- **Raw-body integrity**: Stripe's docs: "Stripe requires the raw body of the request to perform signature verification... Any manipulation to the raw body of the request causes the verification to fail." Flags an already-parsed JSON body, a re-serialized body (`JSON.stringify(JSON.parse(body))` changes whitespace/key order even though the data looks identical), and a global body-parser middleware that consumes the body before the webhook route runs.
+- **Next.js App Router**: `req.json()` used instead of `req.text()` (stripe-node's own example reads `await req.text()` specifically because `req.json()` would parse, and thus change, the payload first), and a missing `await` on `req.text()` (which passes a pending Promise into `constructEvent` instead of the resolved string).
+- **Next.js Pages Router**: missing `export const config = { api: { bodyParser: false } }`, without which Next has already parsed the body by the time the handler runs; stripe-node's own example disables the default parser and reads the stream with a hand-rolled `buffer(req)`.
+- **Pasted code-snippet heuristics**: `JSON.parse(...)` running before `constructEvent(...)`; a global `.use(express.json())`/`.use(bodyParser.json())`; `req.body` passed straight into `constructEvent` without the raw-handling field confirmed as `"raw"`.
+- **The secret's prefix and source**: an API key (`sk_`/`pk_`) used instead of a `whsec_` signing secret; an environment variable that looks unset; the secret printed by `stripe listen` (meant for local forwarding) used against a live, publicly deployed endpoint: Stripe's own troubleshooting page: "Don't verify signatures on events forwarded by the CLI using the secret from a Dashboard-managed endpoint, or the other way around."
+- **Multiple endpoints and modes**: each registered endpoint (Dashboard-created or `stripe listen`) has its own secret; Stripe's docs: "If you use the same endpoint for both test and live API keys, the secret is different for each one."
+- **The `Stripe-Signature` header**: flags reading a different header entirely; notes (informationally) that HTTP header names are case-insensitive and virtually every framework normalizes them to lowercase.
+- **Tolerance and clock skew**: Stripe's docs: "Our libraries have a default tolerance of 5 minutes... Don't use a tolerance value of 0. Using a tolerance value of 0 disables the recency check entirely." A very low positive tolerance, and a server clock skew approaching or exceeding the tolerance window, are both flagged with their own severity.
+- **AWS API Gateway + Lambda**: a base64-encoded body (`isBase64Encoded: true`) that needs decoding before `constructEvent`; Stripe's own troubleshooting docs give a Body Mapping Template that exposes a `rawBody` field for exactly this case.
+- **Edge runtimes**: Cloudflare Workers and similar have no Node `crypto` module, only the async Web Crypto API. stripe-node's synchronous `constructEvent()` throws `CryptoProviderOnlySupportsAsyncError`, whose own message says: "Use `await constructEventAsync(...)` instead of `constructEvent(...)`": the tool flags this whenever an edge/Cloudflare context is described and the pasted snippet doesn't already use `constructEventAsync`.
+- **ngrok**: a reassuring, low-severity note: ngrok itself is a transparent tunnel and does not rewrite the body, so a raw-body mismatch behind ngrok points at your own middleware, not the tunnel.
+
+## Who it's for
+
+Any developer whose Stripe webhook handler throws a signature verification error: Next.js (App Router and Pages Router), Express, Fastify, NestJS, Django, Flask, FastAPI, Rails, Laravel, Go, .NET, or serverless (Vercel, Netlify, AWS Lambda, Cloudflare Workers).
+
+## How it works
+
+Static HTML plus one dependency-free JavaScript file, `doctor-stripe.js`. The page calls a single pure function, `diagnose(config)`, entirely in your browser:
+
+```js
+import { diagnose } from './doctor-stripe.js';
+
+const result = diagnose({
+  error: {
+    message, // the exact error text you saw
+  },
+  app: {
+    framework,              // 'nextjs-app'|'nextjs-pages'|'express'|'fastify'|'nestjs'|
+                             // 'django'|'flask'|'fastapi'|'rails'|'laravel'|'go'|'dotnet'|
+                             // 'vercel-function'|'netlify-function'|'aws-lambda'|'cloudflare-workers'|''
+    bodyHandling,            // 'raw'|'parsed-json'|'string-reserialized'|'unknown'
+    usesBodyParserGlobally,  // boolean|null
+    readsHeader,             // 'stripe-signature'|'Stripe-Signature'|'other'|''
+    secretSource,            // 'dashboard-endpoint'|'cli-listen'|'api-key'|'env-unset'|'unknown'
+    secretPrefix,            // 'whsec_'|'sk_'|'pk_'|'other'
+    mode,                    // 'test'|'live'|'unknown'
+    endpointsCount,          // number|null
+    tolerance,                // number|null: seconds
+    runtime,                  // 'node'|'edge'|'python'|'ruby'|'php'|'go'|'dotnet'|''
+    proxy,                     // 'none'|'vercel'|'netlify'|'lambda-apigw'|'cloudflare'|'ngrok'|'other'
+    bodyBase64,                // boolean|null
+    clockSkewSeconds,          // number|null
+  },
+  code: {
+    snippet, // optional pasted handler code, checked with plain-text patterns only
+  },
+});
+```
+
+There is no backend, no secret value is ever passed in, and no request carries your configuration anywhere: read `index.html` and `doctor-stripe.js` directly to verify.
+
+## Worked example
+
+Input: a Next.js App Router handler where the secret, header, mode, and tolerance are all correctly configured, but the body is read with `req.json()` instead of `req.text()`:
+
+```json
+{
+  "error": { "message": "Webhook Error: Webhook payload must be provided as a string or a Buffer" },
+  "app": {
+    "framework": "nextjs-app",
+    "bodyHandling": "parsed-json",
+    "readsHeader": "stripe-signature",
+    "secretSource": "dashboard-endpoint",
+    "secretPrefix": "whsec_",
+    "mode": "live",
+    "endpointsCount": 1,
+    "tolerance": 300,
+    "runtime": "node",
+    "proxy": "vercel",
+    "clockSkewSeconds": 0
+  },
+  "code": {
+    "snippet": "export async function POST(req) {\n  const body = await req.json();\n  const signature = req.headers.get('stripe-signature');\n  const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);\n}"
+  }
+}
+```
+
+Output (abridged):
+
+```json
+{
+  "status": "fail",
+  "summary": "2 likely blocking causes found. Most likely: App Router route handlers must read the body with await req.text() for a webhook, not await req.json()...",
+  "problems": [
+    { "severity": "high", "code": "raw_body_parsed_json", "message": "Your handler receives req.body already parsed into a JSON object before constructEvent runs..." },
+    { "severity": "high", "code": "nextjs_app_router_req_json_not_text", "message": "App Router route handlers must read the body with await req.text() for a webhook, not await req.json()..." }
+  ],
+  "fixes": [
+    { "title": "Use req.text(), not req.json()", "value": "export async function POST(req) {\n  const body = await req.text();...", "where": "app/api/.../route.ts" }
+  ]
+}
+```
+
+Every other field here is correctly configured: the right secret prefix, the right header, mode, tolerance, and proxy: which is exactly why this class of bug survives a manual read: one line reads plausibly correct (`await req.json()` looks like ordinary, idiomatic Next.js) while quietly handing `constructEvent` an object instead of a string.
+
+## FAQ
+
+**Why does Stripe say no signatures found matching the expected signature?**
+Stripe's own troubleshooting docs say this comes from exactly one of three parameters being wrong: the request body, the `Stripe-Signature` header, or the endpoint secret. In practice the most common cause is the wrong secret (a Dashboard endpoint's `whsec_` used with a `stripe listen` event, or the other way round, or an API key pasted in by mistake). The second most common cause is the raw request body being changed before it reaches `constructEvent`: parsed to JSON, re-serialized, or consumed by a global body-parser middleware first.
+
+**How do I get the raw body in Next.js App Router?**
+Read it with `await req.text()`, never `await req.json()`. stripe-node's own App Router example does exactly this: `const body = await req.text();` then `stripe.webhooks.constructEvent(body, signature, secret)`. `req.json()` parses the body into an object first, which changes the bytes `constructEvent` needs to verify against the signature.
+
+**How do I get the raw body in the Next.js Pages Router?**
+Disable the default body parser with `export const config = { api: { bodyParser: false } }`, then read the raw stream yourself: stripe-node's own Pages Router example uses a small `buffer(req)` helper that accumulates chunks into a `Buffer` before calling `constructEvent`.
+
+**Which webhook secret do I use: Dashboard or `stripe listen`?**
+Whichever one actually sent you the request. A webhook endpoint you create in the Dashboard has its own `whsec_` secret, shown once you click Reveal secret. Running `stripe listen` locally prints a separate secret in your terminal, generated just for that forwarding session. Don't verify signatures on events forwarded by the CLI using the secret from a Dashboard-managed endpoint, or the other way around.
+
+**What does "timestamp outside the tolerance zone" mean?**
+The timestamp Stripe signed into the `Stripe-Signature` header is further from your server's current clock time than your tolerance window allows. Stripe's libraries default this tolerance to 300 seconds (5 minutes). The usual cause is a server clock that has drifted out of sync; Stripe recommends NTP to keep it accurate. Setting the tolerance to `0` does not fix this: Stripe's docs warn that a tolerance of 0 disables the recency check entirely.
+
+**Do I need a different secret for test and live mode?**
+Yes. If you use the same endpoint for both test and live API keys, Stripe generates a different secret for each one. If your endpoint works in test mode but fails in live mode (or the reverse), check that you copied the `whsec_` value for the mode that is actually sending you events.
+
+**Why does my Lambda behind API Gateway fail even though the code looks right?**
+API Gateway commonly base64-encodes the body before your Lambda sees it (`isBase64Encoded: true`), depending on your Content-Type and API Gateway's binary media type settings. Decode it (`Buffer.from(event.body, 'base64')`) before calling `constructEvent`: passing the still-encoded string produces exactly the same class of signature mismatch as a re-serialized body.
+
+**Why does my webhook fail specifically on Cloudflare Workers?**
+Workers (and similar edge runtimes) have no Node `crypto` module: only the async Web Crypto API. stripe-node's synchronous `constructEvent()` detects this and throws `CryptoProviderOnlySupportsAsyncError`, whose message tells you directly: use `await constructEventAsync(...)` instead of `constructEvent(...)`.
+
+**Does this tool send my secret anywhere?**
+No. Everything runs in your browser. You are only asked to describe your configuration in general terms (framework, how the body is read, which secret prefix you're using, whether the source is a Dashboard endpoint or `stripe listen`); the tool never asks for the secret value itself, and nothing you type is sent to a server.
+
+## Privacy
+
+No account, no login, no cookies for the tool itself, no server-side processing of your config. The only analytics are anonymous usage counts (event name + count, never the content of what you entered) sent to a self-hosted Umami instance.
+
+## Links
+
+- Tool: https://arling.sk/stripe-webhook-doctor/
+- Short reference: https://arling.sk/stripe-webhook-doctor/llms.txt
+- Source code: https://github.com/AndryRoby/stripe-webhook-doctor
+- Sibling tool for Google OAuth redirect_uri_mismatch: https://arling.sk/google-oauth-redirect-doctor/
+- Sibling tool for Supabase Auth on the web: https://arling.sk/supabase-redirect-doctor/
+- Hub (more ARLing tools): https://arling.sk/
+
+## Contact
+
+Built by ARLing s. r. o. (Bratislava, Slovakia). andrej@arling.sk
