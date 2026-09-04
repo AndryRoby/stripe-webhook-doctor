@@ -1,0 +1,43 @@
+# Stripe Webhook Signature Doctor
+
+> Free, client-side checker that diagnoses Stripe webhook signature verification errors ("No signatures found matching the expected signature for payload", "Timestamp outside the tolerance zone", and more) and gives the exact fix for your framework.
+
+Paste the exact error text, how your handler reads the raw request body and the `Stripe-Signature` header, where your `whsec_` secret comes from, and (optionally) the relevant lines of your handler code, and it works out which documented cause is actually responsible and gives a copy-paste fix for Next.js, Express, Fastify, NestJS, Django, Flask, FastAPI, Rails, Laravel, Go, .NET, or serverless (Vercel, Netlify, AWS Lambda, Cloudflare Workers): no account, no backend, nothing you type leaves your browser, and the secret's value itself is never asked for.
+
+## What it checks
+
+- Raw-body integrity: an already-parsed JSON body, a re-serialized body, or a global body-parser middleware running before the webhook route: Stripe's own docs: "Any manipulation to the raw body of the request causes the verification to fail."
+- Next.js App Router using `req.json()` instead of `req.text()`, or a missing `await` on `req.text()`.
+- Next.js Pages Router missing `export const config = { api: { bodyParser: false } }`.
+- A pasted code snippet's `JSON.parse` running before `constructEvent`, a global `express.json()`/`bodyParser.json()`, or `req.body` passed without confirmed raw handling.
+- The webhook secret being an API key (`sk_`/`pk_`) instead of a `whsec_` signing secret, an unset environment variable, or a `stripe listen` secret used against a live, publicly deployed endpoint.
+- Multiple registered endpoints each having their own secret, and test/live modes each having a separate one on the same endpoint URL.
+- The `Stripe-Signature` header being read under the wrong name.
+- A tolerance of `0` (which disables the recency check entirely, per Stripe's own warning), a very low positive tolerance, and server clock skew relative to the tolerance window.
+- AWS API Gateway + Lambda's base64-encoded body needing a decode step before `constructEvent`.
+- Edge runtimes (Cloudflare Workers, Vercel Edge) needing `constructEventAsync` instead of the synchronous `constructEvent`, since they only provide the async Web Crypto API.
+
+## Who it's for
+
+Any developer whose Stripe webhook handler throws a signature verification error: Next.js (App Router and Pages Router), Express, Fastify, NestJS, Django, Flask, FastAPI, Rails, Laravel, Go, .NET, or serverless (Vercel, Netlify, AWS Lambda, Cloudflare Workers).
+
+## How it works
+
+Static HTML plus one dependency-free JavaScript file, `doctor-stripe.js`. All checks run in your browser against the values you type; the tool has no backend and never asks for your secret's actual value, only its prefix and source.
+
+## Privacy
+
+No account, no login, no cookies for the tool itself, no server-side processing of your config. The only analytics are anonymous usage counts (event name + count, never the content of what you entered) sent to a self-hosted Umami instance.
+
+## Links
+
+- Tool: https://arling.sk/stripe-webhook-doctor/
+- Full reference (worked example + FAQ): https://arling.sk/stripe-webhook-doctor/llms-full.txt
+- Source code: https://github.com/AndryRoby/stripe-webhook-doctor
+- Sibling tool for Google OAuth redirect_uri_mismatch: https://arling.sk/google-oauth-redirect-doctor/
+- Sibling tool for Supabase Auth on the web: https://arling.sk/supabase-redirect-doctor/
+- Hub (more ARLing tools): https://arling.sk/
+
+## Contact
+
+Built by ARLing s. r. o. (Bratislava, Slovakia). andrej@arling.sk

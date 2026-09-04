@@ -1,0 +1,12 @@
+{
+  "name": "stripe-webhook-doctor",
+  "version": "1.0.0",
+  "description": "Stripe Webhook Signature Doctor — free, client-side diagnostic for Stripe's webhook signature verification errors (No signatures found matching the expected signature for payload, Timestamp outside the tolerance zone, and more) across Next.js, Express, Fastify, NestJS, Django, Flask, FastAPI, Rails, Laravel, Go, .NET, and serverless.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests.mjs"
+  },
+  "license": "UNLICENSED",
+  "author": "ARLing s. r. o. <andrej@arling.sk>"
+}
