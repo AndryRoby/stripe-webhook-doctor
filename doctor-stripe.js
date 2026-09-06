@@ -64,10 +64,10 @@
 //      reader, because Next's default API body parser would otherwise
 //      consume and JSON-parse the body first)
 //  - https://github.com/stripe/stripe-node/blob/master/src/Webhooks.ts
-//      (`DEFAULT_TOLERANCE: 300` — 5 minutes, matching the docs page above;
+//      (`DEFAULT_TOLERANCE: 300`, 5 minutes, matching the docs page above;
 //      a separate `constructEventAsync()` method; `constructEvent()` catches
 //      `CryptoProviderOnlySupportsAsyncError` and appends "Use `await
-//      constructEventAsync(...)` instead of `constructEvent(...)`" — thrown
+//      constructEventAsync(...)` instead of `constructEvent(...)`", thrown
 //      when the only available crypto provider is async-only, i.e. the Web
 //      Crypto API used on edge runtimes such as Cloudflare Workers, which
 //      have no Node `crypto` module)
@@ -77,7 +77,7 @@
 //      a parsed (i.e., JSON) request body")
 //  - https://docs.stripe.com/webhooks.md (Node quickstart sample)
 //      (canonical Express route: `app.post('/webhook', express.raw({type:
-//      'application/json'}), (request, response) => { ... })` — raw-body
+//      'application/json'}), (request, response) => { ... })`: raw-body
 //      middleware mounted on the webhook route only, not globally)
 //
 // Works as an ES module (import { diagnose, expectedValues } from
@@ -211,7 +211,7 @@ const BODY_ACCESS = {
     body, signature, process.env.STRIPE_WEBHOOK_SECRET
   );
 }`,
-    note: "App Router route handlers: read the body with await req.text(), never req.json() — Stripe's own stripe-node example does exactly this.",
+    note: "App Router route handlers: read the body with await req.text(), never req.json(). Stripe's own stripe-node example does exactly this.",
   },
   'nextjs-pages': {
     code:
@@ -231,7 +231,7 @@ export default async function handler(req, res) {
   );
   res.json({ received: true });
 }`,
-    note: "Pages Router API routes: disable Next's default body parser with bodyParser: false, then read the raw stream yourself with a buffer(req) helper — this is stripe-node's own documented example.",
+    note: "Pages Router API routes: disable Next's default body parser with bodyParser: false, then read the raw stream yourself with a buffer(req) helper. This is stripe-node's own documented example.",
   },
   express: {
     code:
@@ -245,7 +245,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
 });
 
 app.use(express.json()); // other routes: parse AFTER the webhook route`,
-    note: "express.raw({type:'application/json'}) on the webhook route gives req.body as a Buffer of the exact bytes. If app.use(express.json()) runs first (globally, before this route), it consumes and parses the body first and verification fails — Stripe's own troubleshooting docs single this out as the fix.",
+    note: "express.raw({type:'application/json'}) on the webhook route gives req.body as a Buffer of the exact bytes. If app.use(express.json()) runs first (globally, before this route), it consumes and parses the body first and verification fails. Stripe's own troubleshooting docs single this out as the fix.",
   },
   fastify: {
     code:
@@ -274,7 +274,7 @@ handleWebhook(@Req() req: RawBodyRequest<Request>) {
     req.rawBody, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET
   );
 }`,
-    note: "Pass rawBody: true when creating the Nest app, then read req.rawBody in the webhook handler — Nest's default body parser would otherwise have already parsed and discarded the raw bytes.",
+    note: "Pass rawBody: true when creating the Nest app, then read req.rawBody in the webhook handler. Nest's default body parser would otherwise have already parsed and discarded the raw bytes.",
   },
   django: {
     code:
@@ -353,7 +353,7 @@ public async Task<IActionResult> Webhook()
         json, signature, Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET")
     );
 }`,
-    note: 'Read Request.Body directly with a StreamReader before any [FromBody] model binding runs — model binding would parse (and thus alter) the body first.',
+    note: 'Read Request.Body directly with a StreamReader before any [FromBody] model binding runs; model binding would parse (and thus alter) the body first.',
   },
   'vercel-function': {
     code:
@@ -376,7 +376,7 @@ export default async function handler(req, res) {
     payload, signature, process.env.STRIPE_WEBHOOK_SECRET
   );
 };`,
-    note: 'Netlify Functions hand you event.body as a string (sometimes base64-encoded — check event.isBase64Encoded) — never JSON.parse it before constructEvent.',
+    note: 'Netlify Functions hand you event.body as a string (sometimes base64-encoded, so check event.isBase64Encoded), and never JSON.parse it before constructEvent.',
   },
   'aws-lambda': {
     code:
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
     payload, signature, process.env.STRIPE_WEBHOOK_SECRET
   );
 };`,
-    note: "API Gateway commonly base64-encodes the body before Lambda sees it (isBase64Encoded: true) — decode it first, and don't JSON.parse it before constructEvent. Stripe's own docs give a Body Mapping Template that exposes a rawBody field for exactly this case.",
+    note: "API Gateway commonly base64-encodes the body before Lambda sees it (isBase64Encoded: true), so decode it first, and don't JSON.parse it before constructEvent. Stripe's own docs give a Body Mapping Template that exposes a rawBody field for exactly this case.",
   },
   'cloudflare-workers': {
     code:
@@ -401,7 +401,7 @@ export default async function handler(req, res) {
     return new Response('ok');
   },
 };`,
-    note: "Workers have no Node crypto module, only the async Web Crypto API — use constructEventAsync (and await it), not the synchronous constructEvent, or stripe-node throws CryptoProviderOnlySupportsAsyncError.",
+    note: "Workers have no Node crypto module, only the async Web Crypto API, so use constructEventAsync (and await it), not the synchronous constructEvent, or stripe-node throws CryptoProviderOnlySupportsAsyncError.",
   },
 };
 
@@ -486,7 +486,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'low',
       code: 'error_message_missing',
-      message: "error.message is empty, so the read below is generic. Paste the exact error text — from your server logs, or Stripe Dashboard → Webhooks → your endpoint → Event deliveries — for a targeted diagnosis.",
+      message: "error.message is empty, so the read below is generic. Paste the exact error text, from your server logs or Stripe Dashboard → Webhooks → your endpoint → Event deliveries, for a targeted diagnosis.",
       path: 'error.message',
     });
   } else if (errorCode === 'unrecognized') {
@@ -524,7 +524,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'low',
       code: 'raw_body_unknown',
-      message: "app.bodyHandling isn't set, so raw-body integrity — the single most common cause of signature failures — can't be checked yet.",
+      message: "app.bodyHandling isn't set, so raw-body integrity, the single most common cause of signature failures, can't be checked yet.",
       path: 'app.bodyHandling',
     });
   }
@@ -557,7 +557,7 @@ export function diagnose(config) {
       pushProblem(problems, {
         severity: 'medium',
         code: 'missing_await_on_text',
-        message: 'req.text() (or request.text()) returns a Promise. Without await, you pass that pending Promise object into constructEvent instead of the resolved string, which fails validation — this is exactly what produces "Webhook payload must be provided as a string or a Buffer".',
+        message: 'req.text() (or request.text()) returns a Promise. Without await, you pass that pending Promise object into constructEvent instead of the resolved string, which fails validation. This is exactly what produces "Webhook payload must be provided as a string or a Buffer".',
         path: 'code.snippet',
         fix: 'const body = await req.text();',
       });
@@ -570,7 +570,7 @@ export function diagnose(config) {
       pushProblem(problems, {
         severity: 'high',
         code: 'nextjs_pages_router_bodyparser_not_disabled',
-        message: "Pages Router API routes parse the body as JSON by default. Without export const config = { api: { bodyParser: false } }, Next.js has already consumed and parsed the raw bytes before your handler runs — stripe-node's own Pages Router example disables the default parser and reads the stream itself with a buffer(req) helper.",
+        message: "Pages Router API routes parse the body as JSON by default. Without export const config = { api: { bodyParser: false } }, Next.js has already consumed and parsed the raw bytes before your handler runs. stripe-node's own Pages Router example disables the default parser and reads the stream itself with a buffer(req) helper.",
         path: 'app.bodyHandling',
         fix: expected.bodyAccess.code,
       });
@@ -583,7 +583,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'high',
       code: 'snippet_json_parse_before_construct_event',
-      message: 'Your pasted code calls JSON.parse(...) on the body before calling constructEvent(...). JSON.parse (even with nothing done to the result afterwards) means the value passed to constructEvent is no longer the raw string/Buffer Stripe sent — pass the pre-parse raw value instead.',
+      message: 'Your pasted code calls JSON.parse(...) on the body before calling constructEvent(...). JSON.parse (even with nothing done to the result afterwards) means the value passed to constructEvent is no longer the raw string/Buffer Stripe sent. Pass the pre-parse raw value instead.',
       path: 'code.snippet',
       fix: 'Call constructEvent with the raw body, before any JSON.parse of it.',
     });
@@ -592,7 +592,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'high',
       code: 'snippet_global_json_parser_detected',
-      message: "Your pasted code calls .use(express.json()) (or bodyParser.json()) — Express's own docs and Stripe's troubleshooting guide agree this must run after the webhook route, never as global middleware applied before it.",
+      message: "Your pasted code calls .use(express.json()) (or bodyParser.json()). Express's own docs and Stripe's troubleshooting guide agree this must run after the webhook route, never as global middleware applied before it.",
       path: 'code.snippet',
       fix: expected.bodyAccess.code || 'Move the webhook route above the global JSON parser, or scope raw-body parsing to just this route.',
     });
@@ -601,7 +601,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'medium',
       code: 'snippet_reqbody_not_confirmed_raw',
-      message: "Your code passes req.body straight into constructEvent. That's only correct when express.raw({type:'application/json'}) ran on this exact route — set app.bodyHandling to \"raw\" once you've confirmed that, otherwise req.body is more likely Express's parsed object.",
+      message: "Your code passes req.body straight into constructEvent. That's only correct when express.raw({type:'application/json'}) ran on this exact route. Set app.bodyHandling to \"raw\" once you've confirmed that, otherwise req.body is more likely Express's parsed object.",
       path: 'code.snippet',
     });
   }
@@ -611,7 +611,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'high',
       code: 'secret_is_api_key_not_whsec',
-      message: `The value you're using as the webhook signing secret starts with "${secretPrefix}" — that's an API key (${secretPrefix === 'sk_' ? 'secret' : 'publishable'} key), not a webhook signing secret. Stripe's Dashboard docs are explicit: "a signing secret beginning with whsec_ appears" on the endpoint's settings page. An API key will never verify a webhook signature correctly.`,
+      message: `The value you're using as the webhook signing secret starts with "${secretPrefix}", which is an API key (${secretPrefix === 'sk_' ? 'secret' : 'publishable'} key), not a webhook signing secret. Stripe's Dashboard docs are explicit: "a signing secret beginning with whsec_ appears" on the endpoint's settings page. An API key will never verify a webhook signature correctly.`,
       path: 'app.secretPrefix',
       value: secretPrefix,
       fix: 'Copy the whsec_... value from Dashboard → Webhooks → your endpoint → Reveal secret (or from `stripe listen`'+"'"+'s terminal output), not an API key.',
@@ -621,7 +621,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'medium',
       code: 'secret_prefix_unrecognized',
-      message: "The secret you're using doesn't start with whsec_, sk_, or pk_ — every genuine Stripe webhook signing secret starts with whsec_. Double-check you copied the whole value with no leading/trailing whitespace or truncation.",
+      message: "The secret you're using doesn't start with whsec_, sk_, or pk_. Every genuine Stripe webhook signing secret starts with whsec_. Double-check you copied the whole value with no leading/trailing whitespace or truncation.",
       path: 'app.secretPrefix',
       value: secretPrefix,
     });
@@ -631,7 +631,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'high',
       code: 'secret_env_unset',
-      message: "The secret variable (e.g. STRIPE_WEBHOOK_SECRET) doesn't reach constructEvent in this environment — either it isn't set there, or there's a typo in the variable name. Stripe's library throws the same \"No signatures found matching the expected signature for payload\" whether the secret is wrong or simply undefined/empty.",
+      message: "The secret variable (e.g. STRIPE_WEBHOOK_SECRET) doesn't reach constructEvent in this environment: either it isn't set there, or there's a typo in the variable name. Stripe's library throws the same \"No signatures found matching the expected signature for payload\" whether the secret is wrong or simply undefined/empty.",
       path: 'app.secretSource',
       fix: 'Set STRIPE_WEBHOOK_SECRET (or your equivalent) in this exact environment, and log its first few characters at boot to confirm it loaded.',
     });
@@ -639,7 +639,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'high',
       code: 'cli_secret_in_live_mode',
-      message: "You're using the secret printed by `stripe listen` while app.mode is \"live\". The CLI's forwarding secret is generated for local event forwarding and is not the signing secret of any publicly registered endpoint — Stripe's own troubleshooting page: \"Don't verify signatures on events forwarded by the CLI using the secret from a Dashboard-managed endpoint, or the other way around.\" A live, publicly deployed endpoint needs the whsec_ secret from its own Dashboard entry.",
+      message: "You're using the secret printed by `stripe listen` while app.mode is \"live\". The CLI's forwarding secret is generated for local event forwarding and is not the signing secret of any publicly registered endpoint. Stripe's own troubleshooting page: \"Don't verify signatures on events forwarded by the CLI using the secret from a Dashboard-managed endpoint, or the other way around.\" A live, publicly deployed endpoint needs the whsec_ secret from its own Dashboard entry.",
       path: 'app.secretSource',
       fix: 'Use the whsec_ secret from Dashboard → Webhooks → your live-mode endpoint, not the `stripe listen` output.',
     });
@@ -650,7 +650,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'low',
       code: 'multiple_endpoints_hint',
-      message: `You have ${endpointsCount} webhook endpoints registered. Each one (Dashboard-created or a running \`stripe listen\`) gets its own whsec_ secret. Confirm the secret in your code matches the exact endpoint actually receiving this request — check its URL in Dashboard → Webhooks against where your server is listening.`,
+      message: `You have ${endpointsCount} webhook endpoints registered. Each one (Dashboard-created or a running \`stripe listen\`) gets its own whsec_ secret. Confirm the secret in your code matches the exact endpoint actually receiving this request; check its URL in Dashboard → Webhooks against where your server is listening.`,
       path: 'app.endpointsCount',
       value: endpointsCount,
     });
@@ -687,7 +687,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'high',
       code: 'tolerance_zero_disables_check',
-      message: "app.tolerance is 0. Stripe's own docs warn against this explicitly: \"Don't use a tolerance value of 0. Using a tolerance value of 0 disables the recency check entirely\" — it doesn't make verification stricter, it turns the replay-attack protection off.",
+      message: "app.tolerance is 0. Stripe's own docs warn against this explicitly: \"Don't use a tolerance value of 0. Using a tolerance value of 0 disables the recency check entirely\". It doesn't make verification stricter, it turns the replay-attack protection off.",
       path: 'app.tolerance',
       value: 0,
       fix: 'Remove the custom tolerance argument to fall back to the library default (300 seconds), or set an explicit positive value.',
@@ -696,7 +696,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'medium',
       code: 'tolerance_very_low',
-      message: `app.tolerance is ${tolerance} seconds — well under Stripe's own default of 300 seconds (5 minutes). Normal delivery/processing delay (network latency, a serverless cold start, request queuing) can exceed a window this tight, causing sporadic "Timestamp outside the tolerance zone" failures even when nothing is actually wrong.`,
+      message: `app.tolerance is ${tolerance} seconds, well under Stripe's own default of 300 seconds (5 minutes). Normal delivery/processing delay (network latency, a serverless cold start, request queuing) can exceed a window this tight, causing sporadic "Timestamp outside the tolerance zone" failures even when nothing is actually wrong.`,
       path: 'app.tolerance',
       value: tolerance,
     });
@@ -709,7 +709,7 @@ export function diagnose(config) {
       pushProblem(problems, {
         severity: 'high',
         code: 'clock_skew_exceeds_tolerance',
-        message: `Your server clock is off from real time by about ${abs} second${abs === 1 ? '' : 's'} — at or beyond your ${tol}-second tolerance window. Stripe signs the timestamp into the header, so a skewed clock alone is enough to trigger "Timestamp outside the tolerance zone" even with a correct secret and an untouched body.`,
+        message: `Your server clock is off from real time by about ${abs} second${abs === 1 ? '' : 's'}, at or beyond your ${tol}-second tolerance window. Stripe signs the timestamp into the header, so a skewed clock alone is enough to trigger "Timestamp outside the tolerance zone" even with a correct secret and an untouched body.`,
         path: 'app.clockSkewSeconds',
         value: clockSkewSeconds,
         fix: "Sync the server's clock via NTP (Network Time Protocol), per Stripe's own recommendation.",
@@ -719,7 +719,7 @@ export function diagnose(config) {
       pushProblem(problems, {
         severity: 'medium',
         code: 'clock_skew_approaching_tolerance',
-        message: `Your server clock is off by about ${abs} second${abs === 1 ? '' : 's'} — more than half of your ${tol}-second tolerance window. Not failing yet, but close enough that ordinary delivery delay could push individual requests over the edge.`,
+        message: `Your server clock is off by about ${abs} second${abs === 1 ? '' : 's'}, more than half of your ${tol}-second tolerance window. Not failing yet, but close enough that ordinary delivery delay could push individual requests over the edge.`,
         path: 'app.clockSkewSeconds',
         value: clockSkewSeconds,
       });
@@ -742,7 +742,7 @@ export function diagnose(config) {
       pushProblem(problems, {
         severity: 'low',
         code: 'lambda_base64_unknown',
-        message: "API Gateway commonly base64-encodes the body before your Lambda sees it (isBase64Encoded: true), depending on your Content-Type and API Gateway's binary media type settings. Confirm whether yours does, and decode before calling constructEvent if so — Stripe's own troubleshooting docs give a Body Mapping Template for exactly this.",
+        message: "API Gateway commonly base64-encodes the body before your Lambda sees it (isBase64Encoded: true), depending on your Content-Type and API Gateway's binary media type settings. Confirm whether yours does, and decode before calling constructEvent if so. Stripe's own troubleshooting docs give a Body Mapping Template for exactly this.",
         path: 'app.bodyBase64',
       });
     }
@@ -765,7 +765,7 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'low',
       code: 'ngrok_not_the_cause',
-      message: "You're using ngrok. ngrok itself is a transparent TCP/HTTP tunnel and does not rewrite the request body. If you're seeing a raw-body mismatch behind ngrok, the cause is almost certainly your own body-parsing middleware or a devtools/logging proxy that pretty-prints JSON — not ngrok.",
+      message: "You're using ngrok. ngrok itself is a transparent TCP/HTTP tunnel and does not rewrite the request body. If you're seeing a raw-body mismatch behind ngrok, the cause is almost certainly your own body-parsing middleware or a devtools/logging proxy that pretty-prints JSON, not ngrok.",
       path: 'app.proxy',
     });
   }
@@ -784,13 +784,13 @@ export function diagnose(config) {
     pushProblem(problems, {
       severity: 'medium',
       code: 'header_value_malformed',
-      message: "Stripe couldn't parse t=...,v1=... out of the header value your code passed in, even though you say you're reading the right header name. Log the raw header value directly before it reaches constructEvent — it may be empty, doubled up by a proxy that forwards it twice, or accidentally an array instead of a single string.",
+      message: "Stripe couldn't parse t=...,v1=... out of the header value your code passed in, even though you say you're reading the right header name. Log the raw header value directly before it reaches constructEvent: it may be empty, doubled up by a proxy that forwards it twice, or accidentally an array instead of a single string.",
       path: 'error.message',
     });
   }
 
   // ── checklist (always populated) ────────────────────────────────────
-  checklist.push('Pass the raw request body — the exact bytes Stripe sent, before any JSON.parse or re-serialization — into constructEvent(). Stripe: "Any manipulation to the raw body of the request causes the verification to fail."');
+  checklist.push('Pass the raw request body, the exact bytes Stripe sent, before any JSON.parse or re-serialization, into constructEvent(). Stripe: "Any manipulation to the raw body of the request causes the verification to fail."');
   checklist.push('Confirm the whsec_ secret in your code matches the specific endpoint you are receiving from: a Dashboard-created endpoint and `stripe listen` each generate a different secret, and test/live modes each have their own secret even on the same endpoint URL.');
   if (expected.bodyAccess && expected.bodyAccess.note) checklist.push(expected.bodyAccess.note);
   checklist.push("Re-check after every deploy: a new global body-parser, an updated reverse proxy, or a changed env var can silently break raw-body access again.");

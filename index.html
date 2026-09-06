@@ -107,311 +107,310 @@
 }
 </script>
 
+<link rel="stylesheet" href="/style/paper.css">
+<link rel="preload" href="/fonts/arling-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/arling-serif.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  :root {
-    --paper:#f6f2ea; --paper-2:#fbf9f4; --ink:#1b1a17; --ink-2:#4a4741; --muted:#66625a; --line:#d9d2c4;
-    --accent:#b23a1d; --accent-soft:#f3e2dc; --ok:#2f6f3e; --warn:#9a6b00;
-    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
-    --sans:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
-    --radius:4px;
-    --maxw:1080px;
+  /* Only what is this page's own. Colours, fonts, headings, buttons, header,
+     footer and tables come from /style/paper.css and are not repeated here. */
+  :root{ --accent-soft:#f3e2dc; --warn:#9a6b00; --r-sm:8px; }
+  [hidden]{display:none !important}
+  .mono{font-family:var(--mono)}
+  .anchor-offset{scroll-margin-top:82px}
+  pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  pre span{white-space:pre}
+
+  /* ── Hero. Text on the left at full display scale, a real screenshot of this
+     page's own tool on the right. The live tool sits full width in block 01
+     below, where both panes have the room to show a whole diagnosis. ── */
+  .hero{padding:clamp(30px,3.6vw,56px) 0 clamp(28px,3.4vw,48px);
+    grid-template-columns:minmax(0,6.8fr) minmax(0,5.2fr)}
+  .hero h1{line-height:1.05;margin-bottom:clamp(14px,1.6vw,22px)}
+  .hero h1 .mono{font-size:.68em;font-weight:500;letter-spacing:0}
+  .w{max-width:100%;overflow-wrap:break-word}
+  .hero .lead{margin-bottom:clamp(16px,1.8vw,24px)}
+  .facts{list-style:none;padding:0;display:flex;flex-wrap:wrap;align-items:baseline;margin-bottom:0}
+  .facts li:not(:last-child)::after{content:"\00b7";margin:0 9px;color:var(--line)}
+  figure.shotwrap{margin:0}
+  figure.shotwrap figcaption{font-family:var(--ui);font-size:12.5px;color:var(--muted);
+    margin-top:10px;max-width:46ch}
+  @media (max-width:860px){.hero{grid-template-columns:1fr}}
+
+  /* Heading block above the tool: kicker, title, hairline, one line of context. */
+  .section-head{margin-bottom:clamp(18px,2.2vw,30px)}
+  .section-head .rule{margin:20px 0 18px}
+
+  section h2{max-width:19em}
+  .sub{color:var(--body);max-width:64ch;margin:0;font-size:clamp(15px,1.05vw,16.5px)}
+
+  /* ── Three causes. An index of reasons, not a grid of cards. ── */
+  ol.rules{list-style:none;margin:0;padding:0;counter-reset:r;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:26px var(--gap)}
+  .rules li{padding-top:13px;border-top:1px solid var(--line);min-width:0}
+  .rules li::before{counter-increment:r;content:counter(r,decimal-leading-zero);
+    font:500 12px/1 var(--ui);letter-spacing:.12em;color:var(--accent);display:block;margin-bottom:9px}
+  .rules h3{margin:0 0 5px;font-size:clamp(17px,1.2vw,19px)}
+  .rules p{margin:0;font-size:clamp(15px,1.02vw,16px);overflow-wrap:anywhere}
+
+  /* ── The tool ── */
+  .play{border:1px solid var(--line);background:var(--card);border-radius:var(--radius);
+    overflow:hidden;box-shadow:0 10px 30px rgba(20,20,19,.07)}
+  .play-head{display:flex;align-items:center;gap:12px;padding:9px 13px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+  .play-head .lights{display:flex;gap:6px}
+  .play-head .lights span{width:9px;height:9px;border-radius:50%;background:rgba(20,20,19,.16)}
+  .play-head .path{color:var(--body);min-width:0;overflow-wrap:anywhere}
+  .play-head .path .method{color:var(--accent)}
+  .play-head .spacer{flex:1}
+  .play-body{display:grid;grid-template-columns:1fr 1fr}
+  .pane{display:flex;flex-direction:column;min-width:0}
+  .pane+.pane{border-left:1px solid var(--line)}
+  .pane-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    padding:9px 12px;border-bottom:1px solid var(--line);background:var(--paper)}
+  .pane-title{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .pane-actions{display:flex;gap:6px;flex-wrap:wrap}
+  @media (max-width:900px){
+    .play-body{grid-template-columns:1fr}
+    .pane+.pane{border-left:none;border-top:1px solid var(--line)}
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --paper:#151412; --paper-2:#1d1b18; --ink:#efe9de; --ink-2:#c9c2b5; --muted:#8f887b; --line:#2e2b26; --accent:#e0623f; --accent-soft:#3a1f17; --ok:#7fbf8e; --warn:#d9a54a; }
+
+  .tabs{display:flex;gap:4px}
+  .tab-btn{background:transparent;border:1px solid var(--line);color:var(--body);border-radius:var(--r-sm);
+    font-family:var(--ui);font-size:12.5px;padding:5px 10px;cursor:pointer}
+  .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+  .tab-btn:not(.active):hover{border-color:var(--ink);color:var(--ink)}
+  .icon-btn{background:transparent;color:var(--body);border:1px solid var(--line);border-radius:var(--r-sm);
+    font-family:var(--ui);font-size:12px;padding:5px 10px;cursor:pointer}
+  .icon-btn:hover{color:var(--ink);border-color:var(--ink)}
+  .icon-btn:disabled{opacity:.6;cursor:progress}
+  .icon-btn.btn-solid{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+  .icon-btn.btn-solid:hover{background:var(--accent-dark);color:#fff}
+  .btn:disabled{opacity:.6;cursor:default}
+
+  #form-pane{flex:1;min-height:0;overflow:auto;padding:14px 15px;display:flex;flex-direction:column;gap:16px}
+  .form-section{display:flex;flex-direction:column;gap:9px}
+  .form-section-title{font:600 11px/1 var(--ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid var(--line);padding-bottom:6px}
+  .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(148px,100%),1fr));gap:10px 12px}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field.full{grid-column:1 / -1}
+  .field label{font-family:var(--ui);font-size:12px;line-height:1.35;color:var(--body)}
+  .field input[type="text"],.field input[type="number"],.field select,.field textarea{
+    background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-sm);
+    padding:7px 9px;font-family:var(--mono);font-size:12.5px;outline:none;width:100%}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink)}
+  .field textarea{resize:vertical;min-height:48px;line-height:1.5}
+  .field .hint{font-family:var(--ui);font-size:10.5px;line-height:1.4;color:var(--muted)}
+  @media (max-width:480px){.field-grid{grid-template-columns:1fr}}
+
+  .json-pane{display:flex;flex-direction:column;min-height:0}
+  textarea.json-in{flex:1;width:100%;background:var(--card);color:var(--ink);border:none;outline:none;resize:none;
+    padding:14px 15px;font-family:var(--mono);font-size:12.5px;line-height:1.6;tab-size:2;min-height:300px}
+  .json-error{margin:0;padding:8px 15px;font-family:var(--mono);font-size:11.5px;color:var(--accent);
+    background:var(--accent-soft);border-top:1px solid var(--line)}
+
+  .output{flex:1;min-height:0;overflow:auto;padding:14px 15px;background:var(--card);
+    font-family:var(--mono);font-size:12.5px;line-height:1.66}
+  .output .placeholder{color:var(--muted)}
+  .output .placeholder .blink{display:inline-block;width:7px;height:13px;background:var(--muted);
+    vertical-align:-2px;margin-left:4px;animation:blink 1.1s steps(2,end) infinite}
+  @keyframes blink{50%{opacity:0}}
+  /* A floor, never a ceiling. The tool is full width here, so the taller pane
+     sets the height of the panel and the whole diagnosis is readable without
+     scrolling inside a box. */
+  @media (min-width:901px){
+    #form-pane,.json-pane,.output{min-height:clamp(320px,44vh,460px)}
+    textarea.json-in{min-height:clamp(320px,44vh,460px)}
   }
-  * { box-sizing:border-box; }
-  html { background:var(--paper); }
-  body { margin:0; color:var(--ink); background:var(--paper); font:16px/1.55 var(--sans); -webkit-font-smoothing:antialiased; }
-  img { max-width:100%; }
-  a { color:inherit; text-decoration-color:var(--line); text-underline-offset:3px; }
-  a:hover { text-decoration-color:var(--accent); }
-  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-  [hidden] { display:none !important; }
-  .skip { position:absolute; left:-999px; top:8px; background:var(--ink); color:var(--paper); padding:8px 12px; z-index:100; }
-  .skip:focus { left:8px; }
-  .wrap { max-width:var(--maxw); margin:0 auto; padding:0 24px; }
-  .mono { font-family:var(--mono); }
 
-  /* Header */
-  header.top { border-bottom:1px solid var(--line); }
-  header.top .wrap { display:flex; align-items:baseline; justify-content:space-between; gap:20px 24px; padding:18px 24px; flex-wrap:wrap; }
-  .wordmark { font:600 21px/1 var(--serif); text-decoration:none; }
-  .wordmark small { font:12.5px/1 var(--sans); color:var(--muted); margin-left:10px; letter-spacing:.04em; }
-  nav.main { display:flex; flex-wrap:wrap; gap:6px 20px; }
-  nav.main a { font-size:14px; text-decoration:none; color:var(--ink-2); white-space:nowrap; }
-  nav.main a:hover { color:var(--accent); }
-  @media (max-width:480px) { .wordmark small { display:none; } }
+  .out-line{white-space:pre-wrap;word-break:break-word}
+  .k{color:var(--body)}
+  .s{color:var(--ok)}
+  .n{color:var(--accent)}
+  .b{color:var(--body);font-style:italic}
+  .p{color:var(--muted)}
+  .sev-high{color:var(--accent)}
+  .sev-medium{color:var(--warn)}
+  .sev-low{color:var(--muted)}
 
-  /* Hero */
-  .hero { padding:60px 0 44px; border-bottom:1px solid var(--line); }
-  .hero h1 { font:400 clamp(30px,5vw,46px)/1.15 var(--serif); letter-spacing:-.01em; margin:0 0 18px; max-width:24ch; }
-  .hero h1 .mono { font-size:.62em; font-weight:500; }
-  .hero p.lead { font-size:18px; color:var(--ink-2); max-width:62ch; margin:0 0 26px; }
-  .hero-cta { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:28px; }
-  .facts { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px 0; color:var(--muted); font-size:14px; }
-  .facts li + li::before { content:"\00b7"; margin:0 10px; color:var(--line); }
-  .facts b { color:var(--ink); font-weight:600; }
+  .status-strip{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 15px;
+    border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:var(--r-sm);
+    border:1px solid var(--line);background:var(--paper);color:var(--body)}
+  .status-pill.fail{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+  .status-pill.warn{color:var(--warn);border-color:var(--warn)}
+  .status-pill.pass{color:var(--ok);border-color:var(--ok)}
 
-  /* Buttons */
-  .btn { display:inline-block; font:600 15px/1 var(--sans); padding:12px 18px; border-radius:var(--radius); text-decoration:none; cursor:pointer; border:2px solid transparent; }
-  .btn-solid { background:var(--accent); color:#fff; border-color:var(--accent); }
-  .btn-solid:hover { color:#fff; opacity:.92; }
-  .btn-line { border:2px solid var(--ink); color:var(--ink); background:transparent; }
-  .btn:disabled { opacity:.6; cursor:default; }
+  .result{display:flex;flex-direction:column;gap:18px}
+  .big-pill{display:inline-flex;align-items:center;font-family:var(--mono);font-size:12px;font-weight:600;
+    padding:4px 10px;border-radius:var(--r-sm);border:1px solid var(--line);text-transform:uppercase;letter-spacing:.03em}
+  .big-pill.pass{color:var(--ok);border-color:var(--ok)}
+  .big-pill.warn{color:var(--warn);border-color:var(--warn)}
+  .big-pill.fail{color:var(--accent);border-color:var(--accent)}
+  .result-summary{font-family:var(--ui);font-size:13.5px;color:var(--body);line-height:1.6;margin:10px 0 0}
 
-  /* Section frame */
-  section.block { padding:56px 0; border-bottom:1px solid var(--line); }
-  .section-head { max-width:74ch; margin-bottom:8px; }
-  .kicker { font:400 14px/1 var(--serif); color:var(--accent); letter-spacing:.04em; margin:0 0 8px; }
-  h2 { font:400 clamp(24px,3.4vw,30px)/1.2 var(--serif); margin:0 0 10px; letter-spacing:-.005em; max-width:26ch; }
-  .sub { color:var(--ink-2); max-width:64ch; margin:0; font-size:15.5px; }
-
-  /* Rules list (problem section) */
-  .rules { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:26px 32px; margin:30px 0 0; padding:0; list-style:none; counter-reset:r; }
-  .rules li { padding-top:14px; border-top:1px solid var(--line); min-width:0; }
-  .rules li::before { counter-increment:r; content:counter(r,decimal-leading-zero); font:400 14px/1 var(--serif); color:var(--accent); display:block; margin-bottom:8px; }
-  .rules b { display:block; font-weight:600; margin-bottom:4px; font-size:15.5px; }
-  .rules p { margin:0; color:var(--ink-2); font-size:14.5px; overflow-wrap:anywhere; }
-
-  /* Playground */
-  .play { border:1px solid var(--line); background:var(--paper-2); border-radius:6px; overflow:hidden; margin-top:30px; }
-  .play-head { display:flex; align-items:center; gap:14px; padding:10px 14px; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:12px; color:var(--muted); flex-wrap:wrap; }
-  .play-head .lights { display:flex; gap:6px; }
-  .play-head .lights span { width:9px; height:9px; border-radius:50%; border:1px solid var(--line); }
-  .play-head .path { color:var(--ink-2); }
-  .play-head .path .method { color:var(--accent); }
-  .play-head .spacer { flex:1; }
-  .play-head .runtime { color:var(--muted); }
-
-  .play-body { display:grid; grid-template-columns:1fr 1fr; min-height:460px; }
-  @media (max-width:900px) { .play-body { grid-template-columns:1fr; } }
-  .pane { display:flex; flex-direction:column; min-width:0; }
-  .pane + .pane { border-left:1px solid var(--line); }
-  @media (max-width:900px) { .pane + .pane { border-left:none; border-top:1px solid var(--line); } }
-  .pane-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  .pane-title { font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
-  .pane-actions { display:flex; gap:6px; flex-wrap:wrap; }
-
-  /* Tabs */
-  .tabs { display:flex; gap:4px; }
-  .tab-btn { background:transparent; border:1px solid var(--line); color:var(--ink-2); font-family:var(--sans); font-size:12.5px; padding:5px 10px; border-radius:4px; cursor:pointer; }
-  .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-  .tab-btn:not(.active):hover { border-color:var(--ink-2); color:var(--ink); }
-
-  /* Small utility buttons */
-  .icon-btn { background:transparent; color:var(--ink-2); border:1px solid var(--line); border-radius:4px; font-family:var(--sans); font-size:12px; padding:5px 10px; cursor:pointer; }
-  .icon-btn:hover { color:var(--ink); border-color:var(--ink-2); background:var(--paper); }
-  .icon-btn:disabled { opacity:.6; cursor:progress; }
-  .icon-btn.btn-solid { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-  .icon-btn.btn-solid:hover { opacity:.9; background:var(--accent); color:#fff; }
-
-  /* Form mode */
-  #form-pane { flex:1; overflow:auto; padding:16px 18px; display:flex; flex-direction:column; gap:20px; min-height:440px; }
-  .form-section { display:flex; flex-direction:column; gap:10px; }
-  .form-section-title { font:600 11px/1 var(--sans); letter-spacing:.04em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); padding-bottom:6px; }
-  .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
-  .field { display:flex; flex-direction:column; gap:4px; min-width:0; }
-  .field.full { grid-column:1 / -1; }
-  .field label { font-size:12px; color:var(--ink-2); font-family:var(--sans); }
-  .field input[type="text"], .field input[type="number"], .field select, .field textarea {
-    background:var(--paper-2); color:var(--ink); border:1px solid var(--line); border-radius:4px;
-    padding:7px 9px; font-family:var(--mono); font-size:12.5px; outline:none; width:100%;
+  .exp-table{width:100%;border-collapse:collapse;font-size:12.3px}
+  .exp-table td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .exp-table td.k{width:1%;white-space:nowrap;padding-right:14px;color:var(--muted);
+    font-family:var(--mono);text-transform:none;letter-spacing:0}
+  .exp-table td.v{color:var(--ink);word-break:break-all}
+  .exp-table td.v.mono{font-family:var(--mono)}
+  .exp-table td.v.multiline,.exp-table td.v.prose{white-space:pre-wrap;word-break:break-word}
+  .exp-table td.v.prose{font-family:var(--ui);color:var(--body)}
+  .exp-table tr:last-child td{border-bottom:none}
+  /* paper.css folds tables into rows on a phone; the result table only needs
+     the label above the value, not a card around every pair. */
+  @media (max-width:600px){
+    .exp-table tr{background:none;border:none;border-radius:0;margin:0;padding:0}
+    .exp-table td{padding:4px 0}
+    .exp-table td::before{display:none}
+    .exp-table td.k{width:auto;white-space:normal;border-bottom:none;padding-bottom:0}
   }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--ink-2); }
-  .field textarea { resize:vertical; min-height:50px; line-height:1.5; }
-  .field .hint { font-size:10.5px; color:var(--muted); font-family:var(--sans); }
-  @media (max-width:480px) { .field-grid { grid-template-columns:1fr; } }
 
-  .json-pane { display:flex; flex-direction:column; }
-  textarea.json-in {
-    flex:1; width:100%; background:var(--paper-2); color:var(--ink); border:none; outline:none; resize:none;
-    padding:16px 18px; font-family:var(--mono); font-size:13px; line-height:1.65; tab-size:2; min-height:440px;
-  }
-  .json-error { margin:0; padding:8px 18px; font-family:var(--mono); font-size:11.5px; color:var(--accent); background:var(--accent-soft); border-top:1px solid var(--line); }
+  .problem-item{border-left:3px solid var(--line);padding:8px 10px;background:var(--paper);
+    border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:12.5px;line-height:1.55;overflow-wrap:anywhere}
+  .problem-item+.problem-item{margin-top:8px}
+  .problem-item.high{border-color:var(--accent)}
+  .problem-item.medium{border-color:var(--warn)}
+  .problem-item.low{border-color:var(--muted)}
+  .problem-item .sev-tag{font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-right:6px}
+  .problem-item.high .sev-tag{color:var(--accent)}
+  .problem-item.medium .sev-tag{color:var(--warn)}
+  .problem-item.low .sev-tag{color:var(--muted)}
+  .problem-item .where{color:var(--muted);font-size:10.5px;margin-top:3px}
 
-  .output { flex:1; padding:16px 18px; font-family:var(--mono); font-size:13px; line-height:1.7; overflow:auto; min-height:440px; background:var(--paper-2); }
-  .output .placeholder { color:var(--muted); font-size:13px; font-family:var(--mono); }
-  .output .placeholder .blink { display:inline-block; width:7px; height:14px; background:var(--muted); vertical-align:-2px; margin-left:4px; animation:blink 1.1s steps(2,end) infinite; }
-  @keyframes blink { 50% { opacity:0; } }
+  .fix-item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;background:var(--paper);
+    border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font-size:12px}
+  .fix-item+.fix-item{margin-top:8px}
+  .fix-item .fix-body{min-width:0;flex:1}
+  .fix-item .fix-title{color:var(--body);margin-bottom:4px}
+  .fix-item .fix-title .where{color:var(--muted)}
+  .fix-item .fix-value{color:var(--accent);margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+  .fix-item .fix-value.multiline{white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+  .fix-item .copy-fix-btn{flex-shrink:0}
 
-  .out-line { white-space:pre-wrap; word-break:break-word; }
-  .k { color:var(--ink-2); }
-  .s { color:var(--ok); }
-  .n { color:var(--accent); }
-  .b { color:var(--ink-2); font-style:italic; }
-  .p { color:var(--muted); }
-  .sev-high { color:var(--accent); }
-  .sev-medium { color:var(--warn); }
-  .sev-low { color:var(--muted); }
+  .checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;
+    font-size:12.5px;color:var(--body)}
+  .checklist li{display:flex;gap:8px;line-height:1.5;overflow-wrap:anywhere}
+  .checklist li::before{content:"\2610";color:var(--accent);flex-shrink:0}
 
-  .status-strip { display:flex; align-items:center; gap:14px; padding:10px 18px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
-  .status-pill { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:4px; border:1px solid var(--line); background:var(--paper); color:var(--ink-2); }
-  .status-pill.fail { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
-  .status-pill.warn { color:var(--warn); border-color:var(--warn); }
-  .status-pill.pass { color:var(--ok); border-color:var(--ok); }
+  .permalink-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:12px 15px 14px;border-top:1px solid var(--line)}
+  .permalink-hint{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
-  /* Rendered result */
-  .result { display:flex; flex-direction:column; gap:20px; }
-  .big-pill { display:inline-flex; align-items:center; font-family:var(--mono); font-size:12px; font-weight:600; padding:4px 10px; border-radius:4px; border:1px solid var(--line); text-transform:uppercase; letter-spacing:.03em; }
-  .big-pill.pass { color:var(--ok); border-color:var(--ok); }
-  .big-pill.warn { color:var(--warn); border-color:var(--warn); }
-  .big-pill.fail { color:var(--accent); border-color:var(--accent); }
-  .result-summary { font-size:13.5px; color:var(--ink-2); line-height:1.6; margin:10px 0 0; }
+  /* ── How it works ── */
+  .endpoint{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);align-items:start}
+  @media (max-width:820px){.endpoint{grid-template-columns:1fr}}
+  .codeblock{border:1px solid var(--line);background:var(--card);border-radius:var(--radius);overflow:hidden}
+  .codeblock-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 14px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .codeblock pre{margin:0;border:none;border-radius:0;background:none;padding:15px 16px;
+    font-size:12.3px;line-height:1.7;color:var(--body)}
+  .codeblock pre{white-space:pre-wrap;overflow-wrap:anywhere}
+  .codeblock pre span{white-space:inherit}
+  .endpoint-copy p{margin:0 0 14px}
+  .endpoint-copy .note{font-family:var(--ui);font-size:13.5px;color:var(--muted);
+    border-left:2px solid var(--accent);padding:8px 0 8px 14px;margin-top:18px;line-height:1.6}
 
-  .exp-table { width:100%; border-collapse:collapse; font-size:12.5px; table-layout:fixed; }
-  .exp-table td { padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-  .exp-table td.k { color:var(--muted); white-space:nowrap; padding-right:14px; width:1%; }
-  .exp-table td.v { color:var(--ink); word-break:break-all; }
-  .exp-table td.v.mono { font-family:var(--mono); }
-  .exp-table td.v.multiline, .exp-table td.v.prose { white-space:pre-wrap; word-break:break-word; }
-  .exp-table td.v.prose { font-family:var(--sans); color:var(--ink-2); }
-  .exp-table tr:last-child td { border-bottom:none; }
+  /* ── Questions ── */
+  details{border-top:1px solid var(--line);padding:14px 0;max-width:56em}
+  details:last-of-type{border-bottom:1px solid var(--line)}
+  summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;
+    font:600 clamp(17px,1.35vw,20px)/1.35 var(--display);color:var(--ink);letter-spacing:-.01em}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--accent);flex:none;font-family:var(--ui);font-weight:400}
+  details[open] summary::after{content:"\2013"}
+  details p{margin:10px 0 0;max-width:70ch;overflow-wrap:anywhere}
 
-  .problem-item { border-left:3px solid var(--line); padding:8px 10px; background:var(--paper); border-radius:0 4px 4px 0; font-size:12.5px; line-height:1.5; overflow-wrap:anywhere; }
-  .problem-item + .problem-item { margin-top:8px; }
-  .problem-item.high { border-color:var(--accent); }
-  .problem-item.medium { border-color:var(--warn); }
-  .problem-item.low { border-color:var(--muted); }
-  .problem-item .sev-tag { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.03em; margin-right:6px; }
-  .problem-item.high .sev-tag { color:var(--accent); }
-  .problem-item.medium .sev-tag { color:var(--warn); }
-  .problem-item.low .sev-tag { color:var(--muted); }
-  .problem-item .where { color:var(--muted); font-family:var(--mono); font-size:10.5px; margin-top:3px; }
+  /* ── Free, on the dark band ── */
+  .ask{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px}
+  .ask p{margin:0;max-width:56ch}
+  .subscribe-form{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .subscribe-form input[type="email"]{height:46px;min-width:0;flex:1 1 240px;padding:0 14px;
+    border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:15px/1 var(--ui)}
+  .subscribe-form input[type="email"]::placeholder{color:var(--muted)}
+  .subscribe-form .btn{flex:none}
+  .hp{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);
+    white-space:nowrap;border:0}
+  #subscribe-thanks{color:#8fc09b;font-weight:600}
+  #subscribe-error{color:var(--accent-light);font-weight:600}
+  @media (max-width:480px){.subscribe-form input[type="email"],.subscribe-form button{width:100%}}
+  .band .sub,.band .ask p{color:#c9c2b4}
+  .band b{color:#fffdf8}
+  .band .rule{background:rgba(255,253,248,.18)}
+  .band .subscribe-form input[type="email"]{background:#232220;border-color:#3d3a34;color:#fffdf8}
+  .band .subscribe-form input[type="email"]::placeholder{color:#8f887b}
+  .band .btn-solid{background:var(--accent-light);color:#141413}
+  .band .btn-solid:hover{background:#e2795a;color:#141413}
 
-  .fix-item { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; background:var(--paper); border:1px solid var(--line); border-radius:4px; padding:9px 10px; font-size:12px; }
-  .fix-item + .fix-item { margin-top:8px; }
-  .fix-item .fix-body { min-width:0; flex:1; }
-  .fix-item .fix-title { color:var(--ink-2); margin-bottom:4px; }
-  .fix-item .fix-title .where { color:var(--muted); }
-  .fix-item .fix-value { font-family:var(--mono); color:var(--accent); word-break:break-all; margin:0; white-space:pre-wrap; }
-  .fix-item .fix-value.multiline { white-space:pre-wrap; word-break:break-word; overflow-x:auto; }
-  .fix-item .copy-fix-btn { flex-shrink:0; }
+  .kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;
+    border:1px solid var(--line);background:var(--paper);color:var(--body)}
 
-  .checklist { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; font-size:12.5px; color:var(--ink-2); }
-  .checklist li { display:flex; gap:8px; line-height:1.5; overflow-wrap:anywhere; }
-  .checklist li::before { content:"\2610"; color:var(--accent); flex-shrink:0; }
-
-  .permalink-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px 18px; border-top:1px solid var(--line); }
-  .permalink-hint { font-family:var(--mono); font-size:11px; color:var(--muted); }
-
-  /* Endpoint / how it works */
-  .endpoint { display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:start; margin-top:30px; }
-  @media (max-width:820px) { .endpoint { grid-template-columns:1fr; } }
-  .codeblock { border:1px solid var(--line); background:var(--paper-2); border-radius:6px; overflow:hidden; }
-  .codeblock-head { padding:10px 14px; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
-  .codeblock pre { margin:0; padding:16px 18px; font-size:12.5px; line-height:1.7; overflow-x:auto; color:var(--ink-2); font-family:var(--mono); -webkit-overflow-scrolling:touch; }
-  .endpoint-copy p { margin:0 0 14px; color:var(--ink-2); font-size:15px; line-height:1.6; }
-  .endpoint-copy .note { font-family:var(--mono); font-size:12.5px; color:var(--muted); border-left:2px solid var(--accent); padding:8px 0 8px 14px; margin-top:18px; line-height:1.6; }
-
-  /* Free */
-  #pricing .btn-line { margin-top:26px; }
-  .ask { display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; }
-  .ask p { margin:0; color:var(--ink-2); max-width:56ch; }
-  .subscribe-ask { border-top:1px solid var(--line); margin-top:24px; padding-top:24px; }
-  .subscribe-form { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .subscribe-form input[type="email"] { height:44px; min-width:0; flex:1 1 240px; padding:0 14px; border:1px solid var(--line); border-radius:4px; background:var(--paper-2); color:var(--ink); font:15px/1 var(--sans); }
-  .subscribe-form input[type="email"]::placeholder { color:var(--muted); }
-  .subscribe-form .btn { flex:none; }
-  .hp { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-  #subscribe-thanks { color:var(--ok); font-weight:600; }
-  #subscribe-error { color:var(--accent); font-weight:600; }
-  @media (max-width: 480px) { .subscribe-form input[type="email"], .subscribe-form button { width:100%; } }
-
-  /* FAQ (details/summary) */
-  details { border-top:1px solid var(--line); padding:14px 0; }
-  details:last-of-type { border-bottom:1px solid var(--line); }
-  summary { cursor:pointer; font:400 18px/1.3 var(--serif); list-style:none; display:flex; justify-content:space-between; gap:12px; }
-  summary::-webkit-details-marker { display:none; }
-  summary::after { content:"+"; color:var(--accent); flex:none; font-family:var(--sans); }
-  details[open] summary::after { content:"\2013"; }
-  details p { color:var(--ink-2); margin:10px 0 0; max-width:70ch; font-size:14.5px; overflow-wrap:anywhere; }
-
-  /* Footer */
-  footer { padding:32px 0 48px; color:var(--muted); font-size:13.5px; }
-  footer .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px 32px; }
-  footer b { color:var(--ink); font-weight:600; }
-  footer a { color:var(--ink-2); }
-  footer p { margin:10px 0 0; }
-
-  .kbd { font-family:var(--mono); font-size:11px; padding:1px 6px; border-radius:3px; border:1px solid var(--line); background:var(--paper); color:var(--ink-2); }
-  .anchor-offset { scroll-margin-top:24px; }
-  pre { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  pre span { white-space:pre; }
+  /* ── Footer ── */
+  footer .cols{gap:20px 32px}
+  footer b{color:var(--ink);font-weight:600}
+  footer p{margin:10px 0 0}
 </style>
 </head>
 <body>
+<div class="wash" aria-hidden="true"><i></i><i></i></div>
 
-<a class="skip" href="#playground">Skip to the diagnosis tool</a>
+<a class="skip" href="#tool">Skip to the diagnosis tool</a>
 
-<!-- Header -->
-<header id="top" class="top">
-  <div class="wrap">
-    <a class="wordmark" href="https://arling.sk/">Webhook Signature Doctor<small>an ARLing tool</small></a>
-    <nav class="main" aria-label="Page">
-      <a href="#problem">Problem</a>
+<header id="top">
+  <div class="wrap bar">
+    <a class="brand" href="https://arling.sk/">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><defs><path id="m" fill-rule="evenodd" d="M16 2.5 L29 29.5 H3 Z M16 12.4 L22.4 25.6 H9.6 Z"/><clipPath id="mr"><rect x="16" width="16" height="32"/></clipPath></defs><use href="#m" fill="currentColor"/><use href="#m" fill="#b23a1d" clip-path="url(#mr)"/></svg>
+      <b>ARLing</b><span>Webhook Signature Doctor</span>
+    </a>
+    <nav aria-label="Page">
       <a href="#playground">Diagnose</a>
+      <a href="#problem">Problem</a>
       <a href="#endpoint">How it works</a>
       <a href="#faq">FAQ</a>
     </nav>
   </div>
 </header>
 
-<!-- Hero -->
-<div class="hero">
-  <div class="wrap">
-    <h1>Stripe says <span class="mono">"No signatures found&hellip;"</span>? Find the exact cause.</h1>
-    <p class="lead">Paste the exact error text, how your handler reads the request body and the Stripe-Signature header, and where your whsec_ secret comes from. Get the one cause that's actually wrong and a copy-paste fix for Next.js, Express, Fastify, NestJS, Django, Flask, FastAPI, Rails, Laravel, Go, .NET, or serverless.</p>
-    <div class="hero-cta">
-      <a href="#playground" class="btn btn-solid">Diagnose your webhook</a>
-      <a href="https://github.com/AndryRoby/stripe-webhook-doctor" class="btn btn-line" target="_blank" rel="noopener">View source on GitHub</a>
+<main>
+
+<!-- Hero: the claim on the left, a screenshot of the page's own tool on the right. -->
+<div class="wrap hero" id="hero">
+  <div>
+    <h1 id="h1"><span class="l">Stripe says</span><span class="l"><span class="mono">"No signatures found&hellip;"</span>?</span><span class="l">Find the exact cause.</span></h1>
+    <p class="lead r d1">Paste the exact error text, how your handler reads the request body and the Stripe-Signature header, and where your whsec_ secret comes from. Get the one cause that's actually wrong and a copy-paste fix for Next.js, Express, Fastify, NestJS, Django, Flask, FastAPI, Rails, Laravel, Go, .NET, or serverless.</p>
+    <div class="cta r d2">
+      <a href="#tool" class="btn btn-solid" data-umami-event="hero-diagnose">Diagnose your webhook</a>
+      <a href="https://github.com/AndryRoby/stripe-webhook-doctor" class="btn btn-line" target="_blank" rel="noopener" data-umami-event="github_click">View source on GitHub</a>
     </div>
-    <ul class="facts">
+    <ul class="facts proof r d3">
       <li><b>16</b> frameworks &amp; runtimes covered</li>
       <li><b>125</b> automated tests</li>
       <li><b>0 &euro;</b>, no account</li>
       <li>runs entirely in your browser</li>
     </ul>
   </div>
+  <figure class="shotwrap r d2">
+    <div class="shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div>
+      <img src="shot/diagnosis.webp" width="1335" height="1001" decoding="async" loading="lazy"
+           alt="The tool on this page with the built-in Next.js App Router example loaded: the form pane on the left, and on the right a red FAIL verdict with the raw-body problem it found and the values it expected.">
+    </div>
+    <figcaption>The built-in example, diagnosed by this page itself. Nothing left the browser.</figcaption>
+  </figure>
 </div>
 
-<main>
-
-<!-- 01 Problem -->
-<section id="problem" class="block anchor-offset">
+<!-- 01 Diagnose. The live tool, full width, so the form and the whole diagnosis both fit. -->
+<section id="playground" class="deep anchor-offset">
   <div class="wrap">
     <div class="section-head">
-      <p class="kicker">01</p>
-      <h2>Three reasons a webhook that looks configured still fails signature verification.</h2>
-      <p class="sub">Stripe's own troubleshooting docs say a "No signatures found" error means exactly one of three parameters is wrong. These three causes account for almost every case.</p>
+      <p class="kicker r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-4.9"/></svg>01 &nbsp;Diagnose</p>
+      <h2 class="r">Describe your handler. Get the one thing that's actually wrong.</h2>
+      <div class="rule"></div>
+      <p class="sub r d1">Nothing you type is sent anywhere; the tool never even asks for your secret's value, only its prefix and source. The check runs in your browser against Stripe's documented webhook rules.</p>
     </div>
-    <ol class="rules">
-      <li>
-        <b>The body isn't raw anymore.</b>
-        <p>constructEvent needs the exact bytes Stripe sent. A global JSON body-parser, a <span class="mono">JSON.parse</span>, or <span class="mono">req.json()</span> instead of <span class="mono">req.text()</span> all change those bytes before verification runs.</p>
-      </li>
-      <li>
-        <b>The wrong secret.</b>
-        <p>A Dashboard endpoint and a running <span class="mono">stripe listen</span> each generate their own <span class="mono">whsec_</span> secret. Test mode and live mode each have a separate one too, even on the same endpoint URL.</p>
-      </li>
-      <li>
-        <b>Timing or the header.</b>
-        <p>A server clock more than 5 minutes off real time trips the tolerance check. A header read under the wrong name, or an edge runtime calling the synchronous <span class="mono">constructEvent</span> instead of the async version, fails before the HMAC is even compared.</p>
-      </li>
-    </ol>
-  </div>
-</section>
-
-<!-- 02 Diagnose -->
-<section id="playground" class="block anchor-offset">
-  <div class="wrap">
-    <div class="section-head">
-      <p class="kicker">02</p>
-      <h2>Describe your handler. Get the one thing that's actually wrong.</h2>
-      <p class="sub">Nothing you type is sent anywhere; the tool never even asks for your secret's value, only its prefix and source. The check runs in your browser against Stripe's documented webhook rules.</p>
-    </div>
-
-    <div class="play">
+    <div class="play r d2" id="tool">
       <div class="play-head">
         <div class="lights"><span></span><span></span><span></span></div>
         <div class="path"><span class="method">fn</span>&nbsp;StripeWebhookDoctor.diagnose(config)</div>
@@ -423,12 +422,12 @@
         <div class="pane">
           <div class="pane-head">
             <div class="tabs">
-              <button class="tab-btn active" id="tab-form" type="button">Form</button>
-              <button class="tab-btn" id="tab-json" type="button">JSON</button>
+              <button class="tab-btn active" id="tab-form" type="button" data-umami-event="tool_tab_form">Form</button>
+              <button class="tab-btn" id="tab-json" type="button" data-umami-event="tool_tab_json">JSON</button>
             </div>
             <div class="pane-actions">
-              <button class="icon-btn" id="reset-btn" type="button" title="Reset to example">example</button>
-              <button class="icon-btn btn-solid" id="run-btn" type="button">Diagnose &crarr;</button>
+              <button class="icon-btn" id="reset-btn" type="button" title="Reset to example" data-umami-event="tool_example">example</button>
+              <button class="icon-btn btn-solid" id="run-btn" type="button" data-umami-event="tool_run">Diagnose &crarr;</button>
             </div>
           </div>
 
@@ -612,8 +611,8 @@
           <div class="pane-head">
             <div class="pane-title">Result &middot; <span id="response-meta">idle</span></div>
             <div class="pane-actions">
-              <button class="icon-btn" id="raw-toggle-btn" type="button">raw JSON</button>
-              <button class="icon-btn" id="copy-btn" type="button">copy</button>
+              <button class="icon-btn" id="raw-toggle-btn" type="button" data-umami-event="tool_raw_json">raw JSON</button>
+              <button class="icon-btn" id="copy-btn" type="button" data-umami-event="tool_copy_result">copy</button>
             </div>
           </div>
           <div class="output" id="output">
@@ -629,23 +628,45 @@
       </div>
 
       <div class="permalink-row">
-        <button class="icon-btn" id="copy-link-btn" type="button">Copy link to this diagnosis</button>
+        <button class="icon-btn" id="copy-link-btn" type="button" data-umami-event="tool_copy_link">Copy link to this diagnosis</button>
         <span class="permalink-hint">Encodes your config (never a secret value) into the URL. Nothing is stored on a server.</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 03 How it works -->
-<section id="endpoint" class="block anchor-offset">
+<!-- 02 Problem -->
+<section id="problem" class="anchor-offset">
   <div class="wrap">
-    <div class="section-head">
-      <p class="kicker">03</p>
-      <h2>One function. Config in, diagnosis out.</h2>
-      <p class="sub">No server, no API key, no signup. <span class="mono">doctor-stripe.js</span> is plain JavaScript: read it, fork it, or run it in your own scripts or CI.</p>
-    </div>
+    <p class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 8V5.5M15 8V5.5M4 13h2M18 13h2"/></svg>02 &nbsp;Problem</p>
+    <h2 class="r">Three reasons a webhook that looks configured still fails signature verification.</h2>
+    <p class="sub r d1">Stripe's own troubleshooting docs say a "No signatures found" error means exactly one of three parameters is wrong. These three causes account for almost every case.</p>
+    <div class="rule"></div>
+    <ol class="rules r d2">
+      <li>
+        <h3>The body isn't raw anymore.</h3>
+        <p>constructEvent needs the exact bytes Stripe sent. A global JSON body-parser, a <span class="mono">JSON.parse</span>, or <span class="mono">req.json()</span> instead of <span class="mono">req.text()</span> all change those bytes before verification runs.</p>
+      </li>
+      <li>
+        <h3>The wrong secret.</h3>
+        <p>A Dashboard endpoint and a running <span class="mono">stripe listen</span> each generate their own <span class="mono">whsec_</span> secret. Test mode and live mode each have a separate one too, even on the same endpoint URL.</p>
+      </li>
+      <li>
+        <h3>Timing or the header.</h3>
+        <p>A server clock more than 5 minutes off real time trips the tolerance check. A header read under the wrong name, or an edge runtime calling the synchronous <span class="mono">constructEvent</span> instead of the async version, fails before the HMAC is even compared.</p>
+      </li>
+    </ol>
+  </div>
+</section>
 
-    <div class="endpoint">
+<!-- 03 How it works -->
+<section id="endpoint" class="deep anchor-offset">
+  <div class="wrap">
+    <p class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>03 &nbsp;How it works</p>
+    <h2 class="r">One function. Config in, diagnosis out.</h2>
+    <p class="sub r d1">No server, no API key, no signup. <span class="mono">doctor-stripe.js</span> is plain JavaScript: read it, fork it, or run it in your own scripts or CI.</p>
+    <div class="rule"></div>
+    <div class="endpoint r d2">
       <div class="codeblock">
         <div class="codeblock-head">
           <span>doctor-stripe.js</span>
@@ -683,20 +704,55 @@
   </div>
 </section>
 
-<!-- 04 Free -->
-<section id="pricing" class="block anchor-offset">
+<!-- 04 Questions -->
+<section id="faq" class="anchor-offset">
   <div class="wrap">
-    <div class="section-head">
-      <p class="kicker">04</p>
-      <h2>Free.</h2>
-      <p class="sub">No account, no payment, no usage limit: it runs as a static page in your browser, so there is no server to bill for.</p>
+    <p class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.2 2.4 3.4 5.4 3.4 8.5s-1.2 6.1-3.4 8.5c-2.2-2.4-3.4-5.4-3.4-8.5s1.2-6.1 3.4-8.5z"/></svg>04 &nbsp;Questions</p>
+    <h2 class="r">Questions developers actually search for.</h2>
+    <p class="sub r d1">Straight answers to the same webhook signature questions this tool diagnoses, for when you just need the answer, not the checker.</p>
+    <div class="rule"></div>
+    <div class="r d2">
+      <details>
+      <summary>Why does Stripe say no signatures found matching the expected signature?</summary>
+      <p>Stripe's own troubleshooting docs say this comes from exactly one of three parameters being wrong: the request body, the Stripe-Signature header, or the endpoint secret. In practice the most common cause is the wrong secret (a Dashboard endpoint's <span class="mono">whsec_</span> used with a <span class="mono">stripe listen</span> event, or the other way round, or an API key pasted in by mistake). The second most common cause is the raw request body being changed before it reaches <span class="mono">constructEvent</span>: parsed to JSON, re-serialized, or consumed by a global body-parser middleware first.</p>
+    </details>
+      <details>
+      <summary>How do I get the raw body in Next.js App Router?</summary>
+      <p>Read it with <span class="mono">await req.text()</span>, never <span class="mono">await req.json()</span>. stripe-node's own App Router example does exactly this: <span class="mono">const body = await req.text();</span> then <span class="mono">stripe.webhooks.constructEvent(body, signature, secret)</span>. <span class="mono">req.json()</span> parses the body into an object first, which changes the bytes <span class="mono">constructEvent</span> needs to verify against the signature.</p>
+    </details>
+      <details>
+      <summary>Which webhook secret do I use: Dashboard or stripe listen?</summary>
+      <p>Whichever one actually sent you the request. A webhook endpoint you create in the Dashboard has its own <span class="mono">whsec_</span> secret, shown once you click Reveal secret. Running <span class="mono">stripe listen</span> locally prints a separate secret in your terminal, generated just for that forwarding session. Stripe's own docs warn: don't verify signatures on events forwarded by the CLI using the secret from a Dashboard-managed endpoint, or the other way around.</p>
+    </details>
+      <details>
+      <summary>What does timestamp outside the tolerance zone mean?</summary>
+      <p>The timestamp Stripe signed into the Stripe-Signature header is further from your server's current clock time than your tolerance window allows. Stripe's libraries default this tolerance to 300 seconds (5 minutes). The usual cause is a server clock that has drifted out of sync; Stripe recommends using NTP to keep it accurate. Setting the tolerance to 0 does not fix this: Stripe's docs warn that a tolerance of 0 disables the recency check entirely, rather than making it stricter.</p>
+    </details>
+      <details>
+      <summary>Do I need a different secret for test and live mode?</summary>
+      <p>Yes. Stripe's own docs state it directly: if you use the same endpoint for both test and live API keys, the secret is different for each one. If your endpoint works in test mode but fails in live mode (or the reverse), check that you copied the <span class="mono">whsec_</span> value for the mode that is actually sending you events, not the other one.</p>
+    </details>
+      <details>
+      <summary>Does this tool send my secret anywhere?</summary>
+      <p>No. Everything runs in your browser. You are only asked to describe your configuration in general terms (framework, how the body is read, which secret prefix you're using, whether the source is a Dashboard endpoint or <span class="mono">stripe listen</span>); the tool never asks for the secret value itself, and nothing you type is sent to a server.</p>
+    </details>
     </div>
-    <div class="ask subscribe-ask" id="subscribe">
+  </div>
+</section>
+
+<!-- 05 Free -->
+<section id="pricing" class="band anchor-offset">
+  <div class="wrap">
+    <p class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11" rx="1.5"/><path d="M2.5 9h19M12 9v11"/><path d="M12 9c-1.5-3.5-2.8-4.7-4.2-4.2C6.4 5.3 6.6 7.6 8 8.4c1 .5 2.4.6 4 .6zM12 9c1.5-3.5 2.8-4.7 4.2-4.2 1.4.5 1.2 2.8-.2 3.6-1 .5-2.4.6-4 .6z"/></svg>05 &nbsp;Free</p>
+    <h2 class="r">Free.</h2>
+    <p class="sub r d1">No account, no payment, no usage limit: it runs as a static page in your browser, so there is no server to bill for.</p>
+    <div class="rule"></div>
+    <div class="ask subscribe-ask r d2" id="subscribe">
       <p><b>Tell me when a new tool lands.</b> New tools only. No newsletter, no sharing. Reply to any mail to be removed.</p>
       <form id="subscribe-form" class="subscribe-form" data-subscribe data-source="stripe-webhook-doctor" data-lang="en" data-thanks="subscribe-thanks" data-error="subscribe-error" novalidate>
         <div class="hp" aria-hidden="true"><input type="text" name="website" id="subscribe-website" tabindex="-1" autocomplete="off"></div>
         <input type="email" id="subscribe-email" name="email" required autocomplete="email" inputmode="email" placeholder="you@example.com" aria-label="Email address">
-        <button class="btn btn-solid" type="submit">Notify me</button>
+        <button class="btn btn-solid" type="submit" data-umami-event="subscribe_submit">Notify me</button>
       </form>
       <p id="subscribe-thanks" hidden>Thanks. You will hear from us only when something new is live.</p>
       <p id="subscribe-error" hidden>Could not save. Write to <a href="mailto:andrej@arling.sk">andrej@arling.sk</a>.</p>
@@ -704,43 +760,8 @@
   </div>
 </section>
 
-<!-- 05 Questions -->
-<section id="faq" class="block anchor-offset">
-  <div class="wrap">
-    <div class="section-head">
-      <p class="kicker">05</p>
-      <h2>Questions developers actually search for.</h2>
-      <p class="sub">Straight answers to the same webhook signature questions this tool diagnoses, for when you just need the answer, not the checker.</p>
-    </div>
-
-    <details>
-      <summary>Why does Stripe say no signatures found matching the expected signature?</summary>
-      <p>Stripe's own troubleshooting docs say this comes from exactly one of three parameters being wrong: the request body, the Stripe-Signature header, or the endpoint secret. In practice the most common cause is the wrong secret (a Dashboard endpoint's <span class="mono">whsec_</span> used with a <span class="mono">stripe listen</span> event, or the other way round, or an API key pasted in by mistake). The second most common cause is the raw request body being changed before it reaches <span class="mono">constructEvent</span>: parsed to JSON, re-serialized, or consumed by a global body-parser middleware first.</p>
-    </details>
-    <details>
-      <summary>How do I get the raw body in Next.js App Router?</summary>
-      <p>Read it with <span class="mono">await req.text()</span>, never <span class="mono">await req.json()</span>. stripe-node's own App Router example does exactly this: <span class="mono">const body = await req.text();</span> then <span class="mono">stripe.webhooks.constructEvent(body, signature, secret)</span>. <span class="mono">req.json()</span> parses the body into an object first, which changes the bytes <span class="mono">constructEvent</span> needs to verify against the signature.</p>
-    </details>
-    <details>
-      <summary>Which webhook secret do I use: Dashboard or stripe listen?</summary>
-      <p>Whichever one actually sent you the request. A webhook endpoint you create in the Dashboard has its own <span class="mono">whsec_</span> secret, shown once you click Reveal secret. Running <span class="mono">stripe listen</span> locally prints a separate secret in your terminal, generated just for that forwarding session. Stripe's own docs warn: don't verify signatures on events forwarded by the CLI using the secret from a Dashboard-managed endpoint, or the other way around.</p>
-    </details>
-    <details>
-      <summary>What does timestamp outside the tolerance zone mean?</summary>
-      <p>The timestamp Stripe signed into the Stripe-Signature header is further from your server's current clock time than your tolerance window allows. Stripe's libraries default this tolerance to 300 seconds (5 minutes). The usual cause is a server clock that has drifted out of sync; Stripe recommends using NTP to keep it accurate. Setting the tolerance to 0 does not fix this: Stripe's docs warn that a tolerance of 0 disables the recency check entirely, rather than making it stricter.</p>
-    </details>
-    <details>
-      <summary>Do I need a different secret for test and live mode?</summary>
-      <p>Yes. Stripe's own docs state it directly: if you use the same endpoint for both test and live API keys, the secret is different for each one. If your endpoint works in test mode but fails in live mode (or the reverse), check that you copied the <span class="mono">whsec_</span> value for the mode that is actually sending you events, not the other one.</p>
-    </details>
-    <details>
-      <summary>Does this tool send my secret anywhere?</summary>
-      <p>No. Everything runs in your browser. You are only asked to describe your configuration in general terms (framework, how the body is read, which secret prefix you're using, whether the source is a Dashboard endpoint or <span class="mono">stripe listen</span>); the tool never asks for the secret value itself, and nothing you type is sent to a server.</p>
-    </details>
-  </div>
-</section>
-
 </main>
+
 
 <footer>
   <div class="wrap cols">
@@ -973,7 +994,7 @@
       ? `<div class="codeblock" style="margin-top:12px">
           <div class="codeblock-head">
             <span>raw-body recipe</span>
-            <button class="icon-btn" type="button" id="copy-recipe-btn">copy</button>
+            <button class="icon-btn" type="button" id="copy-recipe-btn" data-umami-event="tool_copy_recipe">copy</button>
           </div>
           <pre id="recipe-pre">${esc(ba.code)}</pre>
         </div>`
@@ -995,7 +1016,7 @@
             <div class="fix-title">${esc(f.title)}${f.where ? ` <span class="where">· ${esc(f.where)}</span>` : ''}</div>
             <pre class="fix-value${f.value.includes('\n') ? ' multiline' : ''}">${esc(f.value)}</pre>
           </div>
-          <button class="icon-btn copy-fix-btn" type="button" data-fix-index="${i}">copy</button>
+          <button class="icon-btn copy-fix-btn" type="button" data-umami-event="tool_copy_fix" data-fix-index="${i}">copy</button>
         </div>`
       )
       .join('');
@@ -1191,6 +1212,16 @@
 
   if (location.hash && loadFromHash()) {
     runDiagnose();
+  } else {
+    // Nastroj je artefakt: priklad je diagnostikovany hned pri nacitani, takze
+    // vysledkovy panel nie je nikdy prazdny. Ziadny permalink, ziadna udalost.
+    const t0 = performance.now();
+    const sample = diagnose(SAMPLE_CONFIG);
+    const dt = performance.now() - t0;
+    lastResult = sample;
+    renderResult(sample);
+    setStatusPill(sample.status);
+    timing.textContent = dt.toFixed(2) + ' ms · client-side, 0 requests';
   }
 
   // Smooth-scroll for in-page anchors
@@ -1206,6 +1237,63 @@
   });
 </script>
 
+<script>
+/* Pohyb podla ops/design/paper-v2.md, sekcia 7. Ziadna kniznica, ziadny externy skript,
+   ziadny requestAnimationFrame, ziadna nekonecna slucka okrem atramentoveho nadychu v paper.css. */
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var soon = function (fn) { setTimeout(fn, 30); };
+  var hero = document.getElementById('hero');
+
+  if (reduce) {
+    document.querySelectorAll('.r, section').forEach(function (e) { e.classList.add('in'); });
+    return;
+  }
+
+  soon(function () {
+    document.querySelectorAll('.hero .r').forEach(function (e) { e.classList.add('in'); });
+  });
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.1 });
+  document.querySelectorAll('section').forEach(function (s) { io.observe(s); });
+
+  // Nadpis prichadza po slovach. Znacky vnutri riadku (napr. mono) ostavaju celé.
+  var h1 = document.getElementById('h1');
+  if (h1) {
+    var i = 0;
+    Array.prototype.forEach.call(h1.querySelectorAll('.l'), function (line) {
+      var frag = document.createDocumentFragment();
+      Array.prototype.slice.call(line.childNodes).forEach(function (node) {
+        if (node.nodeType === 3) {
+          node.nodeValue.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (!part.trim()) { frag.appendChild(document.createTextNode(part)); return; }
+            var w = document.createElement('span');
+            w.className = 'w';
+            w.style.transitionDelay = (i++ * 0.05).toFixed(2) + 's';
+            w.textContent = part;
+            frag.appendChild(w);
+          });
+        } else {
+          var e = document.createElement('span');
+          e.className = 'w';
+          e.style.transitionDelay = (i++ * 0.05).toFixed(2) + 's';
+          e.appendChild(node.cloneNode(true));
+          frag.appendChild(e);
+        }
+      });
+      line.innerHTML = '';
+      line.appendChild(frag);
+    });
+    soon(function () { h1.classList.add('in'); });
+  }
+
+})();
+</script>
 <script src="subscribe.js" defer></script>
 <script defer src="https://homelab.tailbf8f27.ts.net/script.js" data-website-id="41d02d06-5ac7-41b3-910a-ea36d65718c8"></script>
 </body>

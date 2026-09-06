@@ -7,49 +7,97 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="./favicon.ico">
+<link rel="stylesheet" href="/style/paper.css">
+<link rel="preload" href="/fonts/arling-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/arling-serif.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  :root {
-    --paper:#f6f2ea; --paper-2:#fbf9f4; --ink:#1b1a17; --ink-2:#4a4741; --muted:#66625a; --line:#d9d2c4;
-    --accent:#b23a1d; --accent-soft:#f3e2dc;
-    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
-    --sans:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --paper:#151412; --paper-2:#1d1b18; --ink:#efe9de; --ink-2:#c9c2b5; --muted:#8f887b; --line:#2e2b26; --accent:#e0623f; --accent-soft:#3a1f17; }
-  }
-  * { box-sizing:border-box; }
-  html, body { margin:0; padding:0; }
-  html { background:var(--paper); }
-  body {
-    color:var(--ink); background:var(--paper); font:16px/1.55 var(--sans);
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  a { color:inherit; text-decoration-color:var(--line); text-underline-offset:3px; }
-  a:hover { text-decoration-color:var(--accent); }
-  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-  .mono { font-family:var(--mono); }
-  .card {
-    max-width:480px; width:100%;
-    border:1px solid var(--line); background:var(--paper-2); border-radius:6px;
-    padding:36px 32px; text-align:center;
-  }
-  .wordmark { display:inline-block; font:600 18px/1 var(--serif); text-decoration:none; margin-bottom:22px; }
-  .kicker { font:400 13px/1 var(--serif); color:var(--accent); letter-spacing:.04em; margin:0 0 10px; }
-  h1 { font:400 clamp(22px,4vw,28px)/1.25 var(--serif); letter-spacing:-.01em; margin:0 0 12px; }
-  p.sub { color:var(--ink-2); font-size:15px; margin:0 0 26px; }
-  .btn { display:inline-block; font:600 15px/1 var(--sans); padding:12px 20px; border-radius:4px; text-decoration:none; background:var(--accent); color:#fff; border:2px solid var(--accent); }
-  .btn:hover { color:#fff; opacity:.92; }
+  /* Only what is this page's own. Everything else is /style/paper.css. */
+  .mono{font-family:var(--mono)}
+  /* Jeden stlpec: k neexistujucej stranke neexistuje ani snimka a kreslena scena
+     sa nepouziva, takze text dostane celu sirku a nadpis plnu mierku z paper.css.
+     Prazdno pod nadpisom zaplna index a tmava paticka, nie vyska 100vh. */
+  .miss{padding:clamp(44px,6.5vw,96px) 0 clamp(38px,5vw,76px)}
+  .miss h1{max-width:15em}
+  .miss .lead{max-width:34em}
+  .w{max-width:100%;overflow-wrap:break-word}
+  .index{max-width:620px}
+  /* Tri plochy, ako na samotnom nastroji: papier, tlmena plocha pod indexom,
+     atrament pod patickou. */
+  footer.band b{color:#fffdf8}
+  footer.band p{margin:10px 0 0}
 </style>
 </head>
 <body>
-  <div class="card">
-    <a class="wordmark" href="./">Webhook Doctor</a>
-    <p class="kicker">404</p>
-    <h1>This page does not exist.</h1>
-    <p class="sub">Stripe couldn't verify this address either. Head back and paste your error message and app config instead.</p>
-    <a class="btn" href="./">Back to the diagnosis tool</a>
+<div class="wash" aria-hidden="true"><i></i><i></i></div>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><defs><path id="m" fill-rule="evenodd" d="M16 2.5 L29 29.5 H3 Z M16 12.4 L22.4 25.6 H9.6 Z"/><clipPath id="mr"><rect x="16" width="16" height="32"/></clipPath></defs><use href="#m" fill="currentColor"/><use href="#m" fill="#b23a1d" clip-path="url(#mr)"/></svg>
+      <b>ARLing</b><span>Webhook Doctor</span>
+    </a>
   </div>
+</header>
+
+<main>
+  <div class="wrap miss">
+    <p class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>404</p>
+    <h1 id="h1"><span class="l">This page</span><span class="l">does not exist.</span></h1>
+    <p class="lead r d1">Stripe couldn't verify this address either. Head back and paste your error message and app config instead.</p>
+    <div class="cta r d2"><a class="btn btn-solid" href="./" data-umami-event="404_back">Back to the diagnosis tool</a></div>
+  </div>
+
+  <section class="deep">
+    <div class="wrap">
+      <p class="kicker r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-4.9"/></svg>01</p>
+      <h2 class="r" id="instead">Where to go instead</h2>
+      <div class="rule"></div>
+      <nav class="index r d1" aria-labelledby="instead">
+        <a href="./#playground" data-umami-event="404_index_diagnose"><span class="n">[1]</span><span class="t">Diagnose</span><span class="dots"></span></a>
+        <a href="./#problem" data-umami-event="404_index_problem"><span class="n">[2]</span><span class="t">Problem</span><span class="dots"></span></a>
+        <a href="./#endpoint" data-umami-event="404_index_how"><span class="n">[3]</span><span class="t">How it works</span><span class="dots"></span></a>
+        <a href="./#faq" data-umami-event="404_index_faq"><span class="n">[4]</span><span class="t">FAQ</span><span class="dots"></span></a>
+      </nav>
+    </div>
+  </section>
+</main>
+
+<footer class="band">
+  <div class="wrap cols">
+    <div><b>ARLing s. r. o.</b><br>Ivansk&aacute; cesta 32E<br>821 04 Bratislava, Slovakia</div>
+    <div>Company ID 56583486<br>VAT ID SK2122352100<br><a href="mailto:andrej@arling.sk">andrej@arling.sk</a></div>
+    <div>
+      <a href="./" data-umami-event="404_foot_tool">Webhook Doctor</a> &middot; <a href="https://arling.sk/">ARLing</a> &middot; <a href="https://arling.sk/google-oauth-redirect-doctor/" target="_blank" rel="noopener">Google OAuth Redirect Doctor</a> &middot; <a href="https://arling.sk/supabase-redirect-doctor/" target="_blank" rel="noopener">Supabase Redirect Doctor</a> &middot; <a href="https://arling.sk/flutter-supabase-doctor/" target="_blank" rel="noopener">Flutter Deep Link Doctor</a><br>
+      <a href="llms.txt">llms.txt</a> &middot; <a href="sitemap.xml">sitemap</a> &middot; <a href="https://github.com/AndryRoby/stripe-webhook-doctor" target="_blank" rel="noopener">source on GitHub</a> &middot; <a href="https://arling.sk/privacy/">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Pohyb podla ops/design/paper-v2.md, sekcia 7: nadpis po slovach, jeden prichod,
+   ziadna kniznica, ziadny externy skript, ziadny requestAnimationFrame,
+   sekcie prichadzaju cez IntersectionObserver. */
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) { document.querySelectorAll('.r, section').forEach(function (e) { e.classList.add('in'); }); return; }
+  setTimeout(function () { document.querySelectorAll('.miss .r').forEach(function (e) { e.classList.add('in'); }); }, 30);
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0 });
+  document.querySelectorAll('section').forEach(function (s) { io.observe(s); });
+  var h1 = document.getElementById('h1');
+  if (h1) {
+    var i = 0;
+    Array.prototype.forEach.call(h1.querySelectorAll('.l'), function (line) {
+      line.innerHTML = line.textContent.split(' ').map(function (word) {
+        return '<span class="w" style="transition-delay:' + (i++ * 0.05).toFixed(2) + 's">' + word + '</span>';
+      }).join(' ');
+    });
+    setTimeout(function () { h1.classList.add('in'); }, 30);
+  }
+})();
+</script>
 </body>
 </html>
