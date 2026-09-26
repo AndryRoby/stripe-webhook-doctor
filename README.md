@@ -1,14 +1,20 @@
 # Stripe Webhook Signature Doctor
 
+Stripe Webhook Signature Doctor is a free browser tool that tells you
+why Stripe webhook signature verification fails in your code. It is
+for developers whose webhook endpoint throws errors such as "No
+signatures found matching the expected signature for payload" or
+"Timestamp outside the tolerance zone", and it runs entirely in your
+browser, with no account and nothing uploaded.
+
 Live: https://arling.sk/stripe-webhook-doctor/
 
-A free, static, client-side tool that diagnoses Stripe webhook
-**signature verification errors**: "No signatures found matching the
-expected signature for payload", "Timestamp outside the tolerance
-zone", "Unable to extract timestamp and signatures from header",
-"Webhook payload must be provided as a string or a Buffer", and "No
-webhook payload was provided". Describe how your handler reads the
-request body and the `Stripe-Signature` header, where your `whsec_`
+It covers these **signature verification errors**: "No signatures
+found matching the expected signature for payload", "Timestamp outside
+the tolerance zone", "Unable to extract timestamp and signatures from
+header", "Webhook payload must be provided as a string or a Buffer",
+and "No webhook payload was provided". Describe how your handler reads
+the request body and the `Stripe-Signature` header, where your `whsec_`
 secret comes from, and (optionally) paste the relevant lines of code,
 and it works out which of Stripe's documented causes is actually
 responsible: instead of you re-reading Stripe's webhook docs for the
@@ -113,7 +119,7 @@ before shipping.
 ## About
 
 Built by ARLing s. r. o. (Bratislava, Slovakia).
-Contact: andrej@arling.sk
+Contact: support@arling.sk
 
 Sibling tools in the same "Doctor" family:
 - Google OAuth redirect_uri_mismatch: https://arling.sk/google-oauth-redirect-doctor/
