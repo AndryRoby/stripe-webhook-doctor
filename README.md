@@ -127,3 +127,7 @@ Sibling tools in the same "Doctor" family:
 - Supabase Auth on Flutter: https://arling.sk/flutter-supabase-doctor/
 - Supabase Auth on Expo / React Native: https://arling.sk/expo-supabase-auth-doctor/
 - Hub (more ARLing tools): https://arling.sk/
+
+## License
+
+MIT, see [LICENSE](LICENSE). Use it, fork it, ship it in your own projects. The ARLing name and logo are not part of the license, so please do not present a fork as an ARLing product. Bug reports and pull requests are welcome.
